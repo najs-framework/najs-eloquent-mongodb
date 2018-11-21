@@ -16,6 +16,7 @@ export class MongodbProvider extends Facade implements Najs.Contracts.Eloquent.M
     return new Promise((resolve, reject) => {
       MongoClient.connect(
         url,
+        { useNewUrlParser: true },
         (error: any, client: MongoClient) => {
           if (error) {
             return reject(error)

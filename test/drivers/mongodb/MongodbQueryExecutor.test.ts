@@ -25,10 +25,10 @@ describe('MongodbQueryExecutor', function() {
     collectionUsers = db.collection('users')
     collectionRoles = db.collection('roles')
     for (const data of dataset) {
-      await collectionUsers.save(data)
+      await collectionUsers.insertOne(data)
     }
     for (let i = 0; i < 10; i++) {
-      await collectionRoles.save({
+      await collectionRoles.insertOne({
         name: 'role-' + i,
         deleted_at: new Date()
       })
@@ -868,7 +868,7 @@ describe('MongodbQueryExecutor', function() {
       const handler = makeQueryBuilderHandler('users')
       const result = await makeQueryBuilder(handler)
         .native(function(collection) {
-          return collection.remove({})
+          return collection.deleteOne({})
         })
         .execute()
 

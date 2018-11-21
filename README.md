@@ -27,6 +27,95 @@ npm install najs-binding najs-eloquent najs-eloquent-mongodb
 
 That's it.
 
+## Define Model runs with MongodbDriver
+
+You can register MongodbDriver as default driver by this way
+
+```typescript
+import { DriverProvider } from 'najs-eloquent'
+import { MongodbDriver } from 'najs-eloquent-mongodb'
+
+DriverProvider.register(MongodbDriver, 'mongodb', true)
+```
+
+Or if you want to use MongodbDriver for some specific models only, you can extends from `MongodbModel` instead of `Model`
+
+```typescript
+import { MongodbModel } from 'najs-eloquent-mongodb'
+
+export class User extends MongodbModel {
+  // define a property belongs to User model
+  email: string
+
+  // define a class name which used for Dependency injection
+  // (this feature provided by "najs-binding" package)
+  getClassName() {
+    return 'YourNamespace.User'
+  }
+}
+
+// Register the User class
+MongodbModel.register(User)
+```
+
+## Connect to database and provide custom MongoClient instance
+
+You may want to connect and provide your own `MongoClient` instance, you can do it by using `.bind()` function of the `najs-binding` package. _Note: Please ensure that this file is loaded before using najs-eloquent._
+
+```typescript
+import { bind } from 'najs-binding'
+import { MongodbProviderFacade } from 'najs-eloquent-mongodb'
+
+// Load your mongodb instance instead of mongodb dependency in "najs-eloquent-mongodb" package
+import { Db, MongoClient } from 'mongodb'
+
+export class YourMongodbProvider {
+  static className: string = 'YourNamespace.YourMongodbProvider'
+
+  getClassName() {
+    return YourMongodbProvider.className
+  }
+
+  connect(url: string): Promise<this> {
+    return new Promise((resolve, reject) => {
+      MongoClient.connect(
+        url,
+        { useNewUrlParser: true },
+        (error: any, client: MongoClient) => {
+          if (error) {
+            return reject(error)
+          }
+
+          this.mongoClient = client
+          resolve(this)
+        }
+      )
+    })
+  }
+
+  close(): this {
+    if (this.mongoClient) {
+      this.mongoClient.close()
+    }
+
+    return this
+  }
+
+  getMongoClient(): MongoClient {
+    return this.mongoClient
+  }
+
+  getDatabase(dbName?: string): Db {
+    return this.mongoClient && this.mongoClient.db(dbName)
+  }
+}
+
+bind('NajsEloquent.Provider.MongodbProvider', YourMongodbProvider.className)
+
+// Reload the facade, then najs-eloquent will use your mongodb instance
+MongodbProviderFacade.reloadFacadeRoot()
+```
+
 ## Contribute
 
 PRs are welcomed to this project, and help is needed in order to keep up with the changes of Laravel Eloquent. If you want to improve the library, add functionality or improve the docs please feel free to submit a PR.

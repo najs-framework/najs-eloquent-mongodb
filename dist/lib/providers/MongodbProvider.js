@@ -11,7 +11,7 @@ class MongodbProvider extends najs_facade_1.Facade {
     }
     connect(url) {
         return new Promise((resolve, reject) => {
-            mongodb_1.MongoClient.connect(url, (error, client) => {
+            mongodb_1.MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
                 if (error) {
                     return reject(error);
                 }
